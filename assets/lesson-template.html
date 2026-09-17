@@ -102,7 +102,18 @@ section{padding:26px 20px;border-bottom:1px solid var(--line)}
 
 footer{padding:18px 20px 8px;font-size:13px;color:#8b93a1;line-height:1.7}
   .vwrap{max-width:420px;margin:0 auto 16px;}
-  .vwrap video{width:100%;display:block;border-radius:12px;background:#000;aspect-ratio:3.05/1;object-fit:cover;box-shadow:0 4px 18px rgba(0,0,0,.18);}
+  .vwrap video{width:100%;display:block;border-radius:12px;background:#000;aspect-ratio:auto;object-fit:contain;box-shadow:0 4px 18px rgba(0,0,0,.18);}
+
+  /* ===== 全屏修复：铺满屏幕；竖屏设备全屏时自动旋转为横屏观看 ===== */
+  .vwrap video:fullscreen,.vwrap video:-webkit-full-screen{
+    width:100vw !important;height:100vh !important;max-width:none !important;max-height:none !important;
+    aspect-ratio:auto !important;object-fit:contain !important;border-radius:0 !important;background:#000 !important;
+  }
+  @media (orientation:portrait){
+    .vwrap video:fullscreen,.vwrap video:-webkit-full-screen{
+      width:100vh;height:100vw;transform:rotate(90deg) translateY(-100%);transform-origin:0 0;
+    }
+  }
 </style>
 </head>
 <body>

@@ -24,6 +24,7 @@
   4. **句型**：本句的可复用句式（如 Don't + 动词原形、This is flat out + 形容词），一句话说明用法；
   5. **文化梗**：笑点机制 + 背景（如双关、习语字面义 vs 实际义）；
   6. **造句示例（必写 1-2 个）**：用本课词组/句型造贴近日常生活的句子，附中文，供学员模仿。
+- **词组/句型/连读示例必须逐字来自该句原句**（口语缩略可注明原形，如 I better = I'd better；扩展词必须显式标注"本课未出现，扩展知识"，如 referral bonus 不在台词中——第 3 课真实反馈）。禁止把原句没有的词当"词组"讲解；速查卡（口语缩略等）只列本课实际出现的词，未出现的可一句话带过提示高频，不得混入词组讲解。
 - 解析内容必须与实际音频一致；字幕与官方台词有差异时标注。
 - 结尾给「知识点小结」：词汇、发音、常用词组、句型、文化梗五条。
 
@@ -58,17 +59,18 @@
 1. **base64 变量必须替换本体，禁止只改 src 前缀**：模板的 JS 是 `audio.src = "data:audio/mpeg;base64," + AUDIO_B64;`——base64 由变量承载。派生新课时必须替换 `var AUDIO_B64 = "…"` / `var VIDEO_B64 = "…"` 的**变量本体**，src 行保持原样。只改 src 前缀会把新 base64 拼进旧变量，播放内容 = 新素材 + 上一课素材拼接，学员听到的是上一课内容（第 2 课真实事故）。
 2. **data URI 视频必须 moov 前置**：ffmpeg 输出 mp4 一律加 `-movflags +faststart`（moov 在文件头）。moov 在文件末尾时，浏览器内嵌 base64 视频报 `DEMUXER_ERROR_NO_SUPPORTED_STREAMS`、duration NaN 无法播放。
 3. **生成后验证（三重）**：① 从 HTML 提取 base64 解码回文件，与磁盘源文件逐字节一致；② ffprobe 对时长（音频 = 视频 = FULL_END）；③ 浏览器实测 `audio.duration`（video.duration 在 playwright headless 不可靠——该环境对 file:// 和私有地址媒体有 URL safety check，两课都读不出，属环境限制不是文件问题；视频兜底用「编码参数与上一课可播视频一致 + moov 前置 + 字节一致」判断）。
-4. **字幕裁剪上下都查**：横版视频除底部双语硬字幕条外，顶部常有 UP 主中文旁白注释条（如科普弹幕式字幕），抽帧时上下边缘都要确认，必要时 crop 上下同时裁（示例 640x360 源：`crop=640:210:0:45` 保留 y45-255 中间画面）。
-5. **说话人多于两人的扩展**：新说话人加 badge 类（`.badge.O` 等）+ JS 渲染三态映射，不要写死双人。
+4. **字幕遮挡用 boxblur 模糊（v1.2.1 起，不再 crop）**：先抽帧确认字幕条像素坐标，用 `[0:v]split[a][b];[a]crop=W:H:0:Y,boxblur=24:3[mb];[b][mb]overlay=0:Y[v]` 只模糊字幕条区域（详见 clip-selection.md 第 6 节）；顶部平台水印/UP 旁白条按用户偏好保留不模糊。**filter_complex 禁止带音频 map**（会报 Failed to inject frame into filter network）——先 `-an` 出视频、单独裁音频、最后 `-c:v copy` 合并。
+5. **裁剪起点/终点必须验证首尾句完整**：裁剪后先跑 ASR，确认第一句开头完整（如 329.0 起裁剪导致 "All right, I better go put more money in the meter" 只剩 "…meter" 尾巴——第 3 课真实事故）；首句起点早于直觉时往前多裁 0.5-1s，ASR 首句含完整主谓才算通过。用 `ffmpeg -af silencedetect` 查语音边界辅助。
+6. **.vwrap video 禁止写死裁剪比例**：CSS 不得设 `aspect-ratio:3.05/1;object-fit:cover` 这类裁剪时代残留（会把完整画面裁成窄条、全屏变形——手机全屏 bug 根因）；统一 `aspect-ratio:auto;object-fit:contain`。模板内置全屏修复 CSS（铺满 + 竖屏设备全屏自动旋转横屏）**必须保留，不得删除**。
+7. **说话人多于两人的扩展**：新说话人加 badge 类（`.badge.O` 等）+ JS 渲染三态映射，不要写死双人。
 
 ### 盲听视频标准（视频源带硬字幕时的处理）
 
 1. 先抽 1-2 帧确认字幕条坐标（示例：360x480 竖版，硬字幕条在 y320-480）。
-2. 用 crop 裁掉字幕条、只留画面主体，同时压小体积：
-   `ffmpeg -ss <起> -to <止> -i src.mp4 -vf "crop=360:320:0:0" -c:v libx264 -crf 26 -preset veryfast -pix_fmt yuv420p -c:a aac -b:a 96k -movflags +faststart blind.mp4`
-   （crf 按体积微调，30 秒片段目标 ≤1MB；横版视频按实际字幕条坐标裁。）
+2. **默认 boxblur 模糊字幕条区域、不裁画面**（命令见 clip-selection.md 第 6 节；先 `-an` 出视频、单独裁音频、再 `-c:v copy` 合并），同时压小体积（crf 26 起步，30 秒片段目标 ≤1MB）。
 3. 抽首帧做 poster 小图（jpg），与视频一起 base64 内嵌，避免播放器显示黑屏。
 4. 播放器双轨逻辑：盲听按钮播 `<video>`（从头开始）；点精讲任意一句先 `bv.pause()` 再播 `<audio>` cue；video 的 timeupdate 驱动盲听进度条、ended 复位；音量滑块**同时控制 video 与 audio**；空格快捷键排除 VIDEO 焦点。
+5. **全屏修复 CSS（模板内置，禁止删）**：`.vwrap video` 用 `aspect-ratio:auto;object-fit:contain`；全屏规则 `video:fullscreen` 铺满 + `@media (orientation:portrait)` 下竖屏全屏自动旋转横屏（width:100vh;height:100vw;rotate(90deg) translateY(-100%)）。
 
 交付前按 html Skill 跑 `shot.py` 自检（桌面 + 移动截图、console 错误、重叠文本），通过后再用 present_files 交付。
 
