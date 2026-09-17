@@ -65,7 +65,7 @@
 ```js
 var CUES = [
   {who:"B", en:"英文原句", zh:"中文翻译", s:0.4, e:1.6,
-   note:"解析 HTML：连读（写音标/拟音）+ 词汇 + 句型 + 文化梗（笑点机制）"},
+   note:"解析 HTML：发音/连读（写音标或拟音）+ 词汇 + 常用词组（短语搭配，必写）+ 句型 + 文化梗 + 造句示例 1-2 个（六要素，v1.2 起强制，见 lesson-template.md Step 2）"},
   // who 取值：S=Stewie / B=Brian / O=军官（新说话人加 badge 类，见 2.3）
 ];
 var FULL_END = 67.8;   // 音频总长（秒）
