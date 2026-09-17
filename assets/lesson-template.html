@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ivan Learning 课程模板 — 派生说明见 references/html-build.md</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231d6fe0'/%3E%3Cpath d='M18 34v-4a14 14 0 0 1 28 0v4' fill='none' stroke='%23fff' stroke-width='5' stroke-linecap='round'/%3E%3Crect x='13' y='32' width='10' height='14' rx='4' fill='%23fff'/%3E%3Crect x='41' y='32' width='10' height='14' rx='4' fill='%23fff'/%3E%3C/svg%3E">
+<style>
+
+:root{
+  --bg:#f2f4f8; --card:#ffffff; --ink:#1b2430; --sub:#5b6472; --line:#e2e7ef;
+  --blue:#1d6fe0; --blue-soft:#e8f0fe; --blue-line:#bcd3f6;
+  --amber:#c2620a; --amber-soft:#fdf1e3; --ok:#1a7f4b;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei","Segoe UI",sans-serif;line-height:1.6;-webkit-font-smoothing:antialiased}
+.wrap{max-width:720px;margin:0 auto;padding:20px 16px 48px}
+:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer;-webkit-tap-highlight-color:transparent}
+
+/* ===== hero ===== */
+.hero{padding:26px 20px 22px;background:linear-gradient(180deg,#e7eefc 0%,var(--bg) 100%);border-bottom:1px solid var(--line)}
+.kicker{display:flex;gap:8px;flex-wrap:wrap;font-size:13px;color:var(--sub);margin-bottom:10px}
+.kicker .tag{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:2px 10px}
+h1{font-size:34px;line-height:1.15;letter-spacing:-.5px;font-weight:800}
+h1 .h-mark{color:var(--blue)}
+.hero p{font-size:14.5px;color:var(--sub);margin-top:10px;max-width:600px}
+.steps{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
+.steps a{flex:1 1 150px;min-height:44px;display:flex;align-items:center;gap:8px;justify-content:center;background:var(--card);border:1px solid var(--line);border-radius:12px;text-decoration:none;color:var(--ink);font-size:14px;font-weight:600}
+.steps a .no{color:var(--blue);font-weight:800}
+.steps a:hover{border-color:var(--blue-line)}
+
+/* ===== section ===== */
+section{padding:26px 20px;border-bottom:1px solid var(--line)}
+.shead{display:flex;align-items:baseline;gap:10px;margin-bottom:6px}
+.shead .no{font-size:13px;font-weight:800;color:var(--blue)}
+.shead h2{font-size:21px;font-weight:800}
+.shead .en{font-size:13px;color:var(--sub)}
+.sdesc{font-size:14px;color:var(--sub);margin-bottom:16px}
+
+/* ===== 盲听 ===== */
+.bigplayer{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:14px}
+.bigbtn{width:100%;min-height:56px;border-radius:12px;background:var(--blue);color:#fff;font-size:16px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:8px}
+.bigbtn.playing{background:var(--ink)}
+.bar{height:6px;background:var(--line);border-radius:3px;margin-top:12px;overflow:hidden}
+.bar i{display:block;height:100%;width:0%;background:var(--blue);border-radius:3px}
+.qlist{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 16px}
+.qlist h3{font-size:14px;margin-bottom:8px}
+.qlist ol{padding-left:20px;font-size:14px;color:var(--sub)}
+.qlist li{margin:4px 0}
+.hint{font-size:13.5px;color:var(--sub);margin-top:10px}
+
+/* ===== 精讲卡片 ===== */
+.cue{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--line);border-radius:12px;margin-bottom:10px;overflow:hidden}
+.cue.active{border-color:var(--blue-line);border-left-color:var(--blue);background:var(--blue-soft)}
+.cue .top{display:flex;align-items:center;gap:10px;padding:8px 10px}
+.cue .play{flex:1 1 auto;display:flex;align-items:center;gap:10px;min-height:46px;text-align:left}
+.cue .play > span{display:block;flex:1 1 auto;min-width:0}
+.cue .idx{font-size:12px;color:var(--sub);flex:0 0 auto;width:24px;font-weight:700}
+.badge{flex:0 0 auto;font-size:12px;font-weight:800;color:#fff;border-radius:6px;padding:2px 8px}
+.badge.S{background:var(--blue)} .badge.B{background:var(--amber)} .badge.O{background:var(--ok)}
+.cue .en{display:block;font-size:15.5px;font-weight:600;line-height:1.4}
+.cue .zh{display:block;font-size:14px;color:var(--sub);margin-top:3px}
+.cue .notebtn{flex:0 0 auto;min-width:44px;min-height:44px;border:1px solid var(--line);border-radius:8px;color:var(--sub);font-size:13.5px;font-weight:700}
+.cue .notebtn[aria-expanded="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.cue .note{display:none;padding:10px 14px 12px;border-top:1px dashed var(--line);font-size:13.5px;color:#37414f;background:#fbfcfe}
+.cue .note b{color:var(--blue)}
+.cue.playing .en{color:var(--blue)}
+
+/* 发音对比 */
+.pron{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-top:18px}
+.pron h3{font-size:15px;margin-bottom:10px}
+.prow{display:flex;gap:10px;flex-wrap:wrap}
+.pbox{flex:1 1 200px;background:var(--blue-soft);border:1px solid var(--blue-line);border-radius:10px;padding:10px 12px}
+.pbox.alt{background:var(--amber-soft);border-color:#f0d5ae}
+.pbox .ph{font-size:15px;font-weight:800}
+.pbox .ipa{font-size:13px;color:var(--amber);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;margin-top:2px}
+.pbox p{font-size:13px;color:var(--sub);line-height:1.55;margin-top:6px}
+.pron .tail{font-size:13px;color:var(--sub);line-height:1.6;margin-top:10px}
+
+/* ===== 精听面板 ===== */
+.panel{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px}
+.pdisp{text-align:center;padding:8px 4px 12px}
+.pdisp .pnum{font-size:13.5px;color:var(--sub);margin-bottom:6px}
+.pdisp .pen{font-size:19px;font-weight:800;line-height:1.4}
+.pdisp .pzh{font-size:14px;color:var(--sub);margin-top:6px}
+.pbar{height:6px;background:var(--line);border-radius:3px;overflow:hidden;margin-bottom:14px}
+.pbar i{display:block;height:100%;width:0%;background:var(--amber)}
+.pbtns{display:flex;gap:8px;margin-bottom:10px}
+.pbtns .b{flex:1 1 auto;min-height:46px;border:1px solid var(--line);border-radius:10px;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px}
+.pbtns .playbtn{flex:1.6 1 auto;background:var(--blue);color:#fff;border-color:var(--blue);font-size:15px}
+.pbtns .playbtn.playing{background:var(--ink);border-color:var(--ink)}
+.row2{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.loopbtn{min-height:44px;padding:0 14px;border:1px solid var(--line);border-radius:10px;font-size:13px;font-weight:700}
+.loopbtn[aria-pressed="true"]{background:var(--blue);color:#fff;border-color:var(--blue)}
+.rates{display:flex;gap:4px}
+.rates button{min-height:44px;min-width:44px;border:1px solid var(--line);border-radius:8px;font-size:13.5px;font-weight:700;color:var(--sub)}
+.rates button[aria-pressed="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.vol{display:flex;align-items:center;gap:8px;margin-left:auto;font-size:13px;color:var(--sub)}
+.vol input{width:76px;accent-color:var(--blue)}
+
+footer{padding:18px 20px 8px;font-size:13px;color:#8b93a1;line-height:1.7}
+  .vwrap{max-width:420px;margin:0 auto 16px;}
+  .vwrap video{width:100%;display:block;border-radius:12px;background:#000;aspect-ratio:3.05/1;object-fit:cover;box-shadow:0 4px 18px rgba(0,0,0,.18);}
+</style>
+</head>
+<body>
+<!--
+============================================================
+Ivan Learning 课程页模板（v1.0）— 派生步骤（先读 references/html-build.md 与 clip-selection.md）
+1. 素材：clip-selection.md（选片段→核台词→下载→OCR/ASR 校准→裁无字幕视频+音频+poster）
+2. 填 CUES：逐句 who/en/zh/s/e/note（note 含连读/词汇/句型/梗，连读必写音标或拟音）
+3. 替换 __AUDIO_B64__ / __VIDEO_B64__ / __POSTER_B64__（裁好片再转 base64，poster 填进 <video poster="">）
+4. FULL_END 改为音频真实总长（秒）
+5. 说话人 >2 时：CSS 加 .badge.X 颜色，渲染处加 who→名字映射
+6. 验证：html-build.md 第 7 节三重验证 + shot.py 自检后交付
+============================================================
+-->
+
+
+
+<header class="hero">
+  <div class="kicker"><span class="tag">第 2 课</span><span class="tag">恶搞之家 S05E04</span><span class="tag">B1</span><span class="tag">68 秒</span></div>
+  <h1>Shoot Me <span class="h-mark">in the Foot</span></h1>
+  <p>Brian 和 Stewie 想“光荣退伍”，决定互相射脚假装负伤——结果军官说中弹不算数，白挨两枪还得打仗。本课顺带把习语 shoot yourself in the foot 的字面意思和真实用法一次学会。</p>
+  <nav class="steps">
+    <a href="#blind"><span class="no">01</span>盲听</a>
+    <a href="#explain"><span class="no">02</span>精讲</a>
+    <a href="#intensive"><span class="no">03</span>精听</a>
+  </nav>
+</header>
+
+<section id="blind">
+  <div class="shead"><span class="no">01</span><h2>盲听</h2><span class="en">Blind listening</span></div>
+  <p class="sdesc">先别往下看解析和台词。完整视频 + 原声（字幕条已裁掉），听 2–3 遍，带着 5 个问题：</p>
+  <div class="vwrap">
+    <video id="bv" playsinline preload="auto" controls poster=""></video>
+  </div>
+  <div class="bigplayer">
+    <button class="bigbtn" id="blindBtn" aria-label="播放整段视频">播放整段视频</button>
+    <div class="bar"><i id="blindBar"></i></div>
+  </div>
+  <div class="qlist">
+    <h3>盲听任务</h3>
+    <ol>
+      <li>谁和谁在说话？他们想干什么？</li>
+      <li>“Shoot me in the foot” 字面是什么意思？它的习语意思又是什么？</li>
+      <li>两人最后有没有成功离开？为什么？</li>
+      <li>军官说了什么让他们瞬间绝望？</li>
+      <li>注意听 gonna / wanna / lemme 这类口语缩略，出现了几次？</li>
+    </ol>
+    <p class="hint">听够 2 遍后，进入下面的精讲逐句对答案。</p>
+  </div>
+</section>
+
+<section id="explain">
+  <div class="shead"><span class="no">02</span><h2>精讲</h2><span class="en">Line-by-line analysis</span></div>
+  <p class="sdesc">点击任意一句播放原音，再点「解析」看发音、词汇和句型。</p>
+  <div id="cues"></div>
+  <div class="pron">
+    <h3>本课核心：shoot yourself in the foot（习语双关）</h3>
+    <div class="prow">
+      <div class="pbox"><div class="ph">字面意思</div><div class="ipa">朝自己的脚开枪</div><p>Brian 和 Stewie 干的就是这件事：互相射脚，假装受伤好光荣退伍。</p></div>
+      <div class="pbox alt"><div class="ph">习语意思</div><div class="ipa">搬起石头砸自己的脚 / 自找麻烦</div><p>因为自己愚蠢的决定害了自己，就叫做 shoot yourself in the foot。两人最后白挨两枪也没走成——完美演绎了这个习语。</p></div>
+    </div>
+    <h3 style="margin-top:16px">连读技巧速查（本段高频）</h3>
+    <div class="prow">
+      <div class="pbox"><div class="ph">失爆（吞掉 t/d）</div><p>shoo<b>t</b> me、go<b>t</b> me、don’<b>t</b> point、fla<b>t</b> ou<b>t</b>、missed me、dea<b>d</b> guys——辅音堵住不爆破，快速滑向下一词。</p></div>
+      <div class="pbox alt"><div class="ph">同化（t+j→tʃ，s+j→ʃ）</div><p><b>get you</b>→<b>/ɡetʃə/</b>；<b>gross you</b>→<b>/ɡroʊʃu/</b>。爆破音与 j 相遇时合并成塞擦音，这是最地道的“美式机关枪”。</p></div>
+      <div class="pbox"><div class="ph">弱读（虚词变短）</div><p>an<b>d</b>→/ən/、o<b>f</b> course→/əf/、a<b>t</b> me→/ət/、yo<b>u</b> shoot→/jə/。功能词读轻音，重音留给实词。</p></div>
+      <div class="pbox alt"><div class="ph">口语缩略（最高频四个）</div><p><b>gonna</b>=going to、<b>wanna</b>=want to、<b>lemme</b>=let me、<b>it’ll</b>=it will。听到这几种读音，就是缩略。</p></div>
+    </div>
+  </div></section>
+
+<section id="intensive">
+  <div class="shead"><span class="no">03</span><h2>精听</h2><span class="en">Intensive listening</span></div>
+  <p class="sdesc">逐句精听：可调语速、上一句/下一句、单句循环。练到每一句都“听得出、说得准”。</p>
+  <div class="panel">
+    <div class="pdisp">
+      <div class="pnum" id="pnum">第 1 / 28 句</div>
+      <div class="pen" id="pen">—</div>
+      <div class="pzh" id="pzh"></div>
+    </div>
+    <div class="pbar"><i id="pbar"></i></div>
+    <div class="pbtns">
+      <button class="b" id="prevBtn" aria-label="上一句">上一句</button>
+      <button class="b playbtn" id="playBtn" aria-label="播放当前句">播放</button>
+      <button class="b" id="nextBtn" aria-label="下一句">下一句</button>
+    </div>
+    <div class="row2">
+      <button class="loopbtn" id="loopBtn" aria-pressed="false">单句循环</button>
+      <div class="rates" role="group" aria-label="语速">
+        <button data-rate="0.5" aria-pressed="false">0.5×</button>
+        <button data-rate="0.75" aria-pressed="false">0.75×</button>
+        <button data-rate="1" aria-pressed="true">1×</button>
+        <button data-rate="1.25" aria-pressed="false">1.25×</button>
+      </div>
+      <label class="vol">音量 <input id="vol" type="range" min="0" max="100" value="80"></label>
+    </div>
+  </div>
+</section>
+
+<footer>
+  台词核验：drodd 全集台词 + 视频硬字幕 OCR + 云端 ASR 语音识别三重比对，逐句对齐 28 句原声。时间轴以 ASR 与语音边界检测为准，±0.3 秒偏差。<br>
+  片段仅用于个人学习，来源：恶搞之家 S05E04 "Saving Private Brian"，B 站公开混剪视频裁剪（已裁掉画面字幕条区域）。
+</footer>
+
+<audio id="a" preload="auto"></audio>
+
+
+
+<script>
+
+(function(){
+  "use strict";
+  var AUDIO_B64 = "__AUDIO_B64__"; // ← 替换为音频 base64，见 references/html-build.md 第 6 节
+  var VIDEO_B64 = "__VIDEO_B64__"; // ← 替换为盲听视频 base64，见 references/html-build.md 第 6 节
+  var CUES = [
+    {who:"B",en:"All right, last resort.",zh:"好吧，最后一招了。",s:0.4,e:1.6,note:"连读：<b>last resort</b>→<b>/læst rɪˈzɔrt/</b>（st 与 r 相连）。习语 <b>last resort</b>＝最后一招。<br>示例句：把本课全部句子按此结构填入，条数=实际台词句数；时间轴 s/e 来自台词校准。"},
+    {who:"S",en:"We get injured and go home with purple hearts.",zh:"我们受点伤，然后带着紫心勋章回家。",s:1.6,e:3.8,note:"连读：<b>get injured</b> 的 t 失爆；<b>and go</b>→<b>/ən ɡoʊ/</b>（and 弱读）。文化梗 <b>purple heart</b>＝紫心勋章。<br>说明：who 取值 S=Stewie / B=Brian / O=其他，新说话人需在 CSS 加 .badge.X 并在渲染处扩展映射。"}
+];
+  var FULL_END = 67.8;
+
+  var audio = document.getElementById("a");
+  audio.src = "data:audio/mpeg;base64," + AUDIO_B64;
+  audio.volume = 0.8;
+  var bv = document.getElementById("bv");
+  bv.src = "data:video/mp4;base64," + VIDEO_B64;
+  bv.volume = 0.8;
+
+  var mode = "full";        // full | cue
+  var cur = -1;             // current cue index
+  var loopOn = false;
+  var rate = 1;
+  var playing = false;
+
+  function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
+  function cueStart(i){ return clamp(CUES[i].s - 0.05, 0, CUES[i].s + 0.5); }
+  function cueEnd(i){
+    var e = CUES[i].e + 0.08;
+    if (i + 1 < CUES.length) e = Math.min(e, CUES[i+1].s - 0.03);
+    return clamp(e, CUES[i].e, FULL_END);
+  }
+
+  function setPlaying(p){
+    playing = p;
+    var bb = document.getElementById("blindBtn");
+    bb.classList.toggle("playing", p && mode === "full");
+    bb.textContent = (p && mode === "full") ? "暂停" : "播放整段视频";
+    var pb = document.getElementById("playBtn");
+    pb.classList.toggle("playing", p && mode === "cue");
+    pb.textContent = (p && mode === "cue") ? "暂停" : "播放";
+  }
+
+  function playRange(s, e){
+    try{
+      audio.playbackRate = rate;
+      audio.currentTime = s;
+      var done = audio.play();
+      if (done && done.catch) done.catch(function(){});
+    }catch(err){}
+  }
+
+  function playFull(){
+    mode = "full";
+    audio.pause();
+    setPlaying(true);
+    try{
+      bv.currentTime = 0;
+      var d = bv.play();
+      if (d && d.catch) d.catch(function(){});
+    }catch(err){}
+  }
+
+  function playCue(i, auto){
+    mode = "cue";
+    bv.pause();
+    cur = i;
+    var s = cueStart(i), e = cueEnd(i);
+    setPlaying(true);
+    playRange(s, e);
+    syncPanel();
+    highlightCue();
+  }
+
+  function toggleCue(i){
+    if (mode === "cue" && cur === i && playing){ audio.pause(); setPlaying(false); return; }
+    playCue(i, true);
+  }
+
+  function nextCue(delta){
+    var n = cur < 0 ? 0 : clamp(cur + delta, 0, CUES.length - 1);
+    playCue(n, true);
+  }
+
+  audio.addEventListener("timeupdate", function(){
+    var t = audio.currentTime;
+    if (mode === "cue" && cur >= 0){
+      var e = cueEnd(cur);
+      if (t >= e){
+        if (loopOn){ audio.currentTime = cueStart(cur); }
+        else { audio.pause(); setPlaying(false); }
+      }
+      var p = (t - cueStart(cur)) / (e - cueStart(cur));
+      document.getElementById("pbar").style.width = clamp(p*100,0,100) + "%";
+    }
+  });
+  bv.addEventListener("timeupdate", function(){
+    if (mode !== "full") return;
+    var t = bv.currentTime, dur = bv.duration || FULL_END;
+    var bb = document.getElementById("blindBar");
+    bb.style.width = clamp(t/dur*100,0,100) + "%";
+    if (dur && t >= dur - 0.08){ bv.pause(); setPlaying(false); bb.style.width = "0%"; }
+  });
+  bv.addEventListener("ended", function(){ setPlaying(false); document.getElementById("blindBar").style.width = "0%"; });
+  audio.addEventListener("ended", function(){ setPlaying(false); document.getElementById("blindBar").style.width = "0%"; });
+
+  /* 盲听 */
+  document.getElementById("blindBtn").addEventListener("click", function(){
+    if (mode === "full" && playing){ audio.pause(); setPlaying(false); return; }
+    playFull();
+  });
+
+  /* 精讲渲染 */
+  var box = document.getElementById("cues");
+  CUES.forEach(function(c, i){
+    var d = document.createElement("div");
+    d.className = "cue"; d.id = "cue-" + i;
+    d.innerHTML =
+      '<div class="top">' +
+        '<button class="play" aria-label="播放第 ' + (i+1) + ' 句">' +
+          '<span class="idx">' + (i+1) + '</span>' +
+          '<span class="badge ' + c.who + '">' + (c.who === "S" ? "Stewie" : c.who === "O" ? "军官" : "Brian") + '</span>' +
+          '<span><span class="en"></span><span class="zh"></span></span>' +
+        '</button>' +
+        '<button class="notebtn" aria-expanded="false">解析</button>' +
+      '</div>' +
+      '<div class="note"></div>';
+    d.querySelector(".en").textContent = c.en;
+    d.querySelector(".zh").textContent = c.zh;
+    d.querySelector(".note").innerHTML = c.note;
+    d.querySelector(".play").addEventListener("click", function(){ toggleCue(i); });
+    var nb = d.querySelector(".notebtn");
+    nb.addEventListener("click", function(){
+      var open = nb.getAttribute("aria-expanded") === "true";
+      nb.setAttribute("aria-expanded", String(!open));
+      d.querySelector(".note").style.display = open ? "none" : "block";
+    });
+    box.appendChild(d);
+  });
+
+  function highlightCue(){
+    var els = box.querySelectorAll(".cue");
+    for (var i = 0; i < els.length; i++){
+      els[i].classList.toggle("active", i === cur);
+    }
+  }
+
+  /* 精听面板 */
+  var pnum = document.getElementById("pnum");
+  var pen = document.getElementById("pen");
+  var pzh = document.getElementById("pzh");
+  function syncPanel(){
+    if (cur < 0) return;
+    pnum.textContent = "第 " + (cur+1) + " / " + CUES.length + " 句";
+    pen.textContent = CUES[cur].en;
+    pzh.textContent = CUES[cur].zh;
+  }
+  document.getElementById("prevBtn").addEventListener("click", function(){ if (cur > 0) nextCue(-1); else playCue(0, true); });
+  document.getElementById("nextBtn").addEventListener("click", function(){ if (cur < CUES.length - 1) nextCue(1); else playCue(CUES.length - 1, true); });
+  document.getElementById("playBtn").addEventListener("click", function(){
+    if (playing && mode === "cue"){ audio.pause(); setPlaying(false); return; }
+    if (cur < 0) cur = 0;
+    playCue(cur, true);
+  });
+  var loopBtn = document.getElementById("loopBtn");
+  loopBtn.addEventListener("click", function(){
+    loopOn = !loopOn;
+    loopBtn.setAttribute("aria-pressed", String(loopOn));
+    loopBtn.textContent = loopOn ? "循环中 · 点击取消" : "单句循环";
+  });
+  var rateBtns = document.querySelectorAll(".rates button");
+  rateBtns.forEach(function(b){
+    b.addEventListener("click", function(){
+      rate = parseFloat(b.getAttribute("data-rate"));
+      audio.playbackRate = rate;
+      rateBtns.forEach(function(x){ x.setAttribute("aria-pressed", String(x === b)); });
+    });
+  });
+  document.getElementById("vol").addEventListener("input", function(e){
+    audio.volume = e.target.value / 100;
+    bv.volume = e.target.value / 100;
+  });
+
+  /* 键盘：空格播放/暂停（当前模式） */
+  document.addEventListener("keydown", function(e){
+    if (e.code === "Space" && e.target.tagName !== "BUTTON" && e.target.tagName !== "INPUT" && e.target.tagName !== "VIDEO"){
+      e.preventDefault();
+      if (playing){ audio.pause(); setPlaying(false); }
+      else if (mode === "full"){ playFull(); }
+      else { if (cur < 0) cur = 0; playCue(cur, true); }
+    }
+  });
+})();
+</script>
+</body>
+</html>

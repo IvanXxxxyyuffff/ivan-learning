@@ -36,21 +36,25 @@ license: MIT
 
 ## 2. 出课：四步教学法
 
-读 `references/lesson-template.md` 按模板交付，四步缺一不可：
+**产线铁律：页面必须从 `assets/lesson-template.html` 派生，并严格按 `references/html-build.md` 搭建**——模板含官方 CSS/JS（视觉、播放器双轨逻辑、cue 防串句），任何模型不得另起炉灶重写样式与交互，保证所有学员拿到的页面体验一致。素材准备（台词提取、时间轴对齐、字幕遮挡）按 `references/clip-selection.md` 执行。
 
-1. **盲听**：交付内嵌「无字幕视频+原声」的单文件 HTML（标准见 `references/lesson-template.md` 盲听视频标准；源带硬字幕先 crop 掉字幕条再内嵌）+ 3-5 个引导问题；学员看画面听 2-3 遍，先不看文字。
+读 `references/lesson-template.md` 按交付流程执行，四步缺一不可：
+
+1. **盲听**：交付内嵌「无字幕视频+原声」的单文件 HTML（标准见 `references/html-build.md` 第 5-6 节；源带硬字幕先 crop 掉字幕条再内嵌）+ 3-5 个引导问题；学员看画面听 2-3 遍，先不看文字。
 2. **逐句解析**：台词表格（编号/说话人/台词/解析），解析覆盖发音连读、词汇、句型、文化梗；解析必须与音频实际内容一致。
 3. **带字幕精听**：交付干净双语脚本，按步骤：对照字幕再听一遍 → 标出盲听时没听出的点 → 逐句跟读 2 遍 → 最后裸听检验。
 4. **监督（可选）**：问清每天可学时长 + 提醒时间 → 按定时任务 Skill 建每日打卡 → 学员交作业（填空/造句/录音）→ 批改纠音、按表现调整下一课难度。
 
 ## 3. 质量门
 
-- 台词不编造：字幕站全文 + 视频硬字幕 OCR + 云端 ASR 三重核验；字幕与官方台词有差异要标注。
-- 每课交付：单文件 HTML 互动学习页（内嵌无字幕视频 + 音频，含盲听/精讲/精听，按 html Skill 制作并用其脚本自检）；轻量场景可降级为 `type="renderer"` 交互学习卡。
+- 台词不编造：字幕站全文 + 视频硬字幕 OCR + 云端 ASR 三重核验（见 `references/clip-selection.md` 第 4 节）；字幕与官方台词有差异要标注。
+- 每课交付：单文件 HTML 互动学习页（内嵌无字幕视频 + 音频，含盲听/精讲/精听），从 `assets/lesson-template.html` 派生，按 `references/html-build.md` 第 7 节三重验证（base64 字节一致、时长一致、shot.py 自检）通过后再交付。
 - 逐课难度只升不跳：学员跟读/造句达标后再升等级档。
 
 ## 参考文件
 
 - `references/level-test.md`：A1-C1 分级测试（15 题 + 评分规则 + 口语/写作复核）。
-- `references/clip-selection.md`：片段等级适配维度、时长建议、台词核验与片源流程。
-- `references/lesson-template.md`：每课交付结构与格式模板。
+- `references/clip-selection.md`：**台词提取 · 音频对齐 · 字幕遮挡 · 片源准备**完整操作手册（三重校准、时间轴、crop 字幕、ffmpeg 参数）。
+- `references/html-build.md`：**课程 HTML 页面搭建规范**（结构、视觉规范、播放器双轨逻辑、base64 内嵌、生成后验证、常见问题）。
+- `references/lesson-template.md`：四步教学交付流程 + 复习闭环 + 生产规避清单。
+- `assets/lesson-template.html`：**官方课程页模板**（完整 CSS/JS + 数据占位），出课必须从它派生。
