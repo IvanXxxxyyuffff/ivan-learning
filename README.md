@@ -2,6 +2,26 @@
 
 用《恶搞之家》(Family Guy) 等美剧/美漫/动画的名场面梗片段，按 **「盲听 → 逐句解析 → 带字幕精听」** 三步流程带练英语听力与口语的 AI Skill。
 
+## 一键安装（GitHub 自动安装）
+
+把这个仓库链接发给你的豆包（或其他支持 Agent 技能的工具）：
+
+```text
+https://github.com/IvanXxxxyyuffff/ivan-learning
+```
+
+然后对它说：
+
+```text
+帮我安装这个 GitHub 仓库里的 skill
+```
+
+豆包会自动从 GitHub 读取本仓库的 `SKILL.md` 完成安装，装好后对它说 **「用 ivan-learning 带我学英语」** 即可开始。
+
+> 豆包桌面版可在「插件」里安装 GitHub 插件，之后在对话框 `@github` 也可以直接让它安装本仓库。
+
+如果自动安装没有识别，可下载本仓库 Release 里的 `ivan-learning.zip`，在豆包「我的技能 → 新建 → 上传技能」里直接拖拽上传，效果相同。
+
 ## 它做什么
 
 - **等级测评**：安装后先询问你的 CEFR 等级（A1–C1）；不知道就做 15 道分级测试题自动定级。
@@ -13,28 +33,16 @@
   4. **监督打卡（可选）**：每日提醒 + 作业批改纠音。
 - **复习闭环**：第 2 次及以后开新课前，先发上一课复习入口，批改通过后再收集新课素材。
 
-## 安装
-
-### 方式一：SkillHub（审核通过后）
-
-```bash
-skillhub install ivan-learning
-```
-
-### 方式二：手动安装
-
-把本仓库的 `SKILL.md` 和 `references/` 放入 Agent 的 skills 目录：
+## 仓库结构
 
 ```text
-<your_agent_workspace>/.user_skills/ivan-learning/
-├── SKILL.md
+ivan-learning/
+├── SKILL.md                      # 技能本体（等级测评、复习闭环、四步教学、质量门）
 └── references/
-    ├── level-test.md
-    ├── clip-selection.md
-    └── lesson-template.md
+    ├── level-test.md             # A1-C1 分级测试（15 题 + 评分规则）
+    ├── clip-selection.md         # 选片段：先核台词再找片源 + ASR/OCR 校准
+    └── lesson-template.md        # 每课交付模板 + 生产防踩坑清单
 ```
-
-然后对 Agent 说：**「用 ivan-learning 带我学英语」** 即可开始。
 
 ## 使用流程
 
