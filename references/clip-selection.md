@@ -58,12 +58,12 @@
 源视频带硬字幕（B 站剪辑几乎都带）时，**默认用 boxblur 模糊字幕条区域，不裁剪画面**（保留完整构图；第 3 课起按用户确定的标准执行）：
 
 1. **上下边缘都要抽帧检查**：除底部双语字幕条外，横版合集顶部常有 UP 主中文旁白/注释条（第 2 课真实案例：顶部 y0-45 旁白条 + 底部 y255+ 双语条）。**只模糊台词字幕所在区域**（底部双语条）；顶部平台水印/UP 旁白条不属于台词字幕，按用户偏好默认保留（用户明确要求干净时才一并模糊）。
-2. OCR 千分比坐标换算像素：`像素 = 千分比 / 1000 × 高度`（如 640x360 底部字幕 y722-961 → 像素 y260-346；模糊区取 y250-360，上下各留 5-10px 余量防露出）。
+2. **用 OCR 的 text_location 精确像素坐标定模糊区，勿留大余量**：mediakit `video-ocr --mode Detailed` 返回每段字幕的像素 y 范围（如 640x360 英文字幕 y266-321、中文字幕 y321-359 → 字幕区 y266-359）。模糊区 = 字幕区上下各加 **4-6px** 余量（上边缘=字幕最顶-6，下边缘=字幕最底+2；crop 高度须偶数）。**禁止像早期第 3 课那样取 y250-360（比字幕多 16px）——会把角色身体/桌面糊掉（用户反馈"模糊区域太大"）**。
 3. **先裁视频（-an）、再裁音频、最后合并**——`filter_complex` 带音频 map 会报 `Failed to inject frame into filter network`（真实踩坑，勿试）：
    ```bash
-   # ① 模糊字幕条（示例：底部 y250-360）→ 无音频视频
+   # ① 模糊字幕条（示例：字幕 y266-359 → 模糊区 y260-360，crop 高度 100）→ 无音频视频
    ffmpeg -ss <起> -to <止> -i src.mp4 \
-     -filter_complex "[0:v]split[a][b];[a]crop=640:110:0:250,boxblur=24:3[mb];[b][mb]overlay=0:250[v]" \
+     -filter_complex "[0:v]split[a][b];[a]crop=640:100:0:260,boxblur=24:3[mb];[b][mb]overlay=0:260[v]" \
      -map "[v]" -c:v libx264 -crf 26 -preset veryfast -pix_fmt yuv420p -an step1.mp4
    # ② 音频
    ffmpeg -ss <起> -to <止> -i src.mp4 -vn -acodec aac -b:a 96k lesson_audio.m4a
