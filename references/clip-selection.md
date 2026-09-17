@@ -55,24 +55,31 @@
 
 ## 6. 字幕遮挡（盲听视频必须无字幕）
 
-源视频带硬字幕（B 站剪辑几乎都带）时，**先确认字幕条坐标，再 crop 裁掉**：
+源视频带硬字幕（B 站剪辑几乎都带）时，**默认用 boxblur 模糊字幕条区域，不裁剪画面**（保留完整构图；第 3 课起按用户确定的标准执行）：
 
-1. **上下边缘都要抽帧检查**：除底部双语字幕条外，横版合集顶部常有 UP 主中文旁白/注释条（第 2 课真实案例：顶部 y0-45 旁白条 + 底部 y255+ 双语条，只裁底部会残留顶部中文）。
-2. 确认保留的中间画面区域后 crop：
-   - 横版 640x360 示例（上下都裁）：`-vf "crop=640:210:0:45"`（保留 y45-255）
-   - 竖版 360x480 示例（只裁底部）：`-vf "crop=360:320:0:0"`（保留 y0-320）
-3. 裁完**抽首帧验证**：画面里无任何字幕残留，且主体完整不裁掉角色头部。
+1. **上下边缘都要抽帧检查**：除底部双语字幕条外，横版合集顶部常有 UP 主中文旁白/注释条（第 2 课真实案例：顶部 y0-45 旁白条 + 底部 y255+ 双语条）。**只模糊台词字幕所在区域**（底部双语条）；顶部平台水印/UP 旁白条不属于台词字幕，按用户偏好默认保留（用户明确要求干净时才一并模糊）。
+2. OCR 千分比坐标换算像素：`像素 = 千分比 / 1000 × 高度`（如 640x360 底部字幕 y722-961 → 像素 y260-346；模糊区取 y250-360，上下各留 5-10px 余量防露出）。
+3. **先裁视频（-an）、再裁音频、最后合并**——`filter_complex` 带音频 map 会报 `Failed to inject frame into filter network`（真实踩坑，勿试）：
+   ```bash
+   # ① 模糊字幕条（示例：底部 y250-360）→ 无音频视频
+   ffmpeg -ss <起> -to <止> -i src.mp4 \
+     -filter_complex "[0:v]split[a][b];[a]crop=640:110:0:250,boxblur=24:3[mb];[b][mb]overlay=0:250[v]" \
+     -map "[v]" -c:v libx264 -crf 26 -preset veryfast -pix_fmt yuv420p -an step1.mp4
+   # ② 音频
+   ffmpeg -ss <起> -to <止> -i src.mp4 -vn -acodec aac -b:a 96k lesson_audio.m4a
+   # ③ 合并（c:v copy）
+   ffmpeg -i step1.mp4 -i lesson_audio.m4a -c:v copy -c:a aac -b:a 96k -movflags +faststart blind.mp4
+   ```
+   需模糊多处时，对 step1 再做一次同款 split/overlay（crop 高度须偶数）。
+4. **裁完/模糊完抽帧验证**：字幕区无任何可读英文残留，主体完整。crop 裁剪仅作备选（画面完整性不重要或体积敏感时）。
 
 ## 7. 裁剪音频与视频（产物准备）
 
 ```bash
-# 音频（逐句 cue 与盲听共用，mp3 或 m4a 视 base64 体积选）
-ffmpeg -ss <起> -to <止> -i src.mp4 -vn -acodec libmp3lame -q:a 4 -y lesson_audio.mp3
+# 音频（逐句 cue 与盲听共用，m4a 体积更小）
+ffmpeg -ss <起> -to <止> -i src.mp4 -vn -acodec aac -b:a 96k -y lesson_audio.m4a
 
-# 盲听视频（无字幕 + 小体积 + moov 前置！）
-ffmpeg -ss <起> -to <止> -i src.mp4 -vf "crop=<w>:<h>:<x>:<y>" \
-  -c:v libx264 -crf 26 -preset veryfast -pix_fmt yuv420p \
-  -c:a aac -b:a 96k -movflags +faststart -y blind.mp4
+# 盲听视频（无字幕 + 小体积 + moov 前置！）：先用第 6 节模糊出无字幕视频再合并音频
 ```
 
 - **`-movflags +faststart` 必须加**：moov 前置，否则内嵌 base64 视频浏览器无法播放（黑屏/duration NaN）。
