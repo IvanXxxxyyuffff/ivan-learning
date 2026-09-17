@@ -367,8 +367,8 @@ Ivan Learning 课程页模板（v1.0）— 派生步骤（先读 references/html
     pen.textContent = CUES[cur].en;
     pzh.textContent = CUES[cur].zh;
   }
-  document.getElementById("prevBtn").addEventListener("click", function(){ if (cur > 0) nextCue(-1); else playCue(0, true); });
-  document.getElementById("nextBtn").addEventListener("click", function(){ if (cur < CUES.length - 1) nextCue(1); else playCue(CUES.length - 1, true); });
+  document.getElementById("prevBtn").addEventListener("click", function(){ if (cur > 0) nextCue(-1); else playCue(CUES.length - 1, true); /* 第一句→循环回最后一句 */ });
+  document.getElementById("nextBtn").addEventListener("click", function(){ if (cur < CUES.length - 1) nextCue(1); else playCue(0, true); /* 最后一句→循环回第一句 */ });
   document.getElementById("playBtn").addEventListener("click", function(){
     if (playing && mode === "cue"){ audio.pause(); setPlaying(false); return; }
     if (cur < 0) cur = 0;
