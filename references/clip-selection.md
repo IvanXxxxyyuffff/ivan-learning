@@ -59,12 +59,14 @@
 
 1. **上下边缘都要抽帧检查**：除底部双语字幕条外，横版合集顶部常有 UP 主中文旁白/注释条（第 2 课真实案例：顶部 y0-45 旁白条 + 底部 y255+ 双语条）。**只模糊台词字幕所在区域**（底部双语条）；顶部平台水印/UP 旁白条不属于台词字幕，按用户偏好默认保留（用户明确要求干净时才一并模糊）。
 2. **用 OCR 的 text_location 精确像素坐标定模糊区，勿留大余量**：mediakit `video-ocr --mode Detailed` 返回每段字幕的像素 y 范围（如 640x360 英文字幕 y266-321、中文字幕 y321-359）。**默认只模糊英文字幕行，保留中文行**（学员看中文辅助理解、听英文训练——第 3 课用户确定的标准）：模糊区 = 英文区上下各加 4-6px（如 y260-326，crop 高度须偶数）。**禁止把中英整条都糊**（比英文区多 30px+，用户反馈"还是很大"）。仅当用户明确要求无任何文字时才覆盖中文行。
-3. **boxblur 必须显式写 chroma 参数**：`boxblur=24:3` 会让 chroma 隐式取 24，但 chroma 半径上限是 16 → 报 `Invalid chroma_param radius value 24`（crop 高度变小时必现，第 3 课真实踩坑）。**统一写 `boxblur=24:3:8:2`**（luma 24:3 足够让字幕文字不可读，chroma 8:2 防色度溢出）。
+3. **boxblur 参数三坑（第 3 课真实踩坑，全中过）**：
+   - 必须显式写 chroma 参数：`boxblur=24:3` 让 chroma 隐式取 24，但 chroma 半径上限 16 → 报 `Invalid chroma_param radius value 24`；
+   - **luma 半径 24 模糊云太大**：半径=24 的模糊向边缘外扩散一圈，视觉上糊条比实际区域大很多（用户连续反馈"模糊区域太大"）。**统一用 `boxblur=10:2:6:2`**——luma 半径 10 对 30px 高的字幕文字足够不可读，且糊条边缘锐利、视觉面积最小（第 3 课最终标准）。
 4. **先裁视频（-an）、再裁音频、最后合并**——`filter_complex` 带音频 map 会报 `Failed to inject frame into filter network`（真实踩坑，勿试）：
    ```bash
-   # ① 只模糊英文行（示例：英文 y266-321 → 模糊区 y260-326，crop 高度 66）→ 无音频视频
+   # ① 只模糊英文行（示例：英文 y266-321 → 模糊区 y262-322，crop 高度 60；与中文行 y321+ 不重叠）→ 无音频视频
    ffmpeg -ss <起> -to <止> -i src.mp4 \
-     -filter_complex "[0:v]split[a][b];[a]crop=640:66:0:260,boxblur=24:3:8:2[mb];[b][mb]overlay=0:260[v]" \
+     -filter_complex "[0:v]split[a][b];[a]crop=640:60:0:262,boxblur=10:2:6:2[mb];[b][mb]overlay=0:262[v]" \
      -map "[v]" -c:v libx264 -crf 26 -preset veryfast -pix_fmt yuv420p -an step1.mp4
    # ② 音频
    ffmpeg -ss <起> -to <止> -i src.mp4 -vn -acodec aac -b:a 96k lesson_audio.m4a
