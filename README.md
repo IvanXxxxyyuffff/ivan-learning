@@ -2,9 +2,9 @@
 
 用《恶搞之家》(Family Guy) 等美剧/美漫/动画的名场面梗片段，按 **「盲听 → 逐句解析 → 带字幕精听」** 三步流程带练英语听力与口语的 AI Skill。
 
-## 一键安装（GitHub 自动安装）
+## 一键安装
 
-把这个仓库链接发给你的豆包（或其他支持 Agent 技能的工具）：
+把这个仓库链接发给你的 AI 工具（任何支持 Agent 技能 / GitHub skill 安装的工具均可）：
 
 ```text
 https://github.com/IvanXxxxyyuffff/ivan-learning
@@ -16,11 +16,9 @@ https://github.com/IvanXxxxyyuffff/ivan-learning
 帮我安装这个 GitHub 仓库里的 skill
 ```
 
-豆包会自动从 GitHub 读取本仓库的 `SKILL.md` 完成安装，装好后对它说 **「用 ivan-learning 带我学英语」** 即可开始。
+工具会自动从 GitHub 读取本仓库的 `SKILL.md` 完成安装，装好后对它说 **「用 ivan-learning 带我学英语」** 即可开始。
 
-> 豆包桌面版可在「插件」里安装 GitHub 插件，之后在对话框 `@github` 也可以直接让它安装本仓库。
-
-如果自动安装没有识别，可下载本仓库 Release 里的 `ivan-learning.zip`，在豆包「我的技能 → 新建 → 上传技能」里直接拖拽上传，效果相同。
+> 如果你的工具支持插件市场，也可以直接搜索「ivan-learning」安装；或下载本仓库的 Release zip 包，在工具的「技能 / Skill」管理里手动上传，效果相同。
 
 ## 它做什么
 
@@ -38,9 +36,12 @@ https://github.com/IvanXxxxyyuffff/ivan-learning
 ```text
 ivan-learning/
 ├── SKILL.md                      # 技能本体（等级测评、复习闭环、四步教学、质量门）
+├── assets/
+│   └── lesson-template.html      # 官方课程页模板（base64 自包含）
 └── references/
     ├── level-test.md             # A1-C1 分级测试（15 题 + 评分规则）
-    ├── clip-selection.md         # 选片段：先核台词再找片源 + ASR/OCR 校准
+    ├── clip-selection.md         # 选片段：先核台词再找片源 + ASR/OCR 校准 + 下载通道
+    ├── html-build.md             # 课程页构建：base64 内嵌 / 播放器契约 / 验证清单
     └── lesson-template.md        # 每课交付模板 + 生产防踩坑清单
 ```
 
@@ -56,8 +57,19 @@ ivan-learning/
 ## 质量保证
 
 - 台词不编造：字幕站全文 + 视频硬字幕 OCR + 云端 ASR 三重校准，逐句对齐（±0.3s）。
-- 盲听视频无字幕：视频源带硬字幕时先裁剪掉字幕条区域再内嵌。
-- 生产规避清单：base64 变量本体替换、mp4 moov 前置、生成后三重验证等，固化在 `references/lesson-template.md`。
+- 盲听视频无字幕：视频源带硬字幕时按 OCR 文本框做 boxblur 模糊（只糊英文行、半径小、不裁画面），保留完整画面。
+- 精听循环：末句「下一句」回第一句、首句「上一句」到末句，双向循环契约已固化在 html-build.md。
+- 音频同窗口：精听音频与盲听视频必须是同一时间窗裁切（同源同 8–38s 段），避免时间轴错位。
+- 生产规避清单：base64 变量本体替换、mp4 moov 前置、生成后三重验证（结构 / 字节 / JS 语法 / Playwright 实开），全部固化在 `references/` 里。
+
+## 本地依赖
+
+课程生产需要：
+- **ffmpeg**（转码 / 裁切 / boxblur 模糊 / base64 内嵌）
+- **yt-dlp**（找片源下载，支持多线程 `-N 8` 与 `--proxy` 代理）
+- **faster-whisper**（base 模型，台词时间轴校准；模型可手动下到本地路径绕过 HF 流式中断）
+
+无代理环境的下载通道：B 站国内直连 / YouTube 走 B 站搬运 / 公共代理，详见 `references/clip-selection.md` 第 3 节。
 
 ## 版权边界
 
