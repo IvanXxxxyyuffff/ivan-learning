@@ -65,7 +65,7 @@
 ```js
 var CUES = [
   {who:"B", en:"英文原句", zh:"中文翻译", s:0.4, e:1.6,
-   note:"解析 HTML：发音/连读（写音标或拟音）+ 词汇 + 常用词组（短语搭配，必写）+ 句型 + 文化梗 + 造句示例 1-2 个（六要素，v1.2 起强制，见 lesson-template.md Step 2）"}  // 硬规则：词组/句型/连读示例必须逐字来自该句原句；速查卡只列本课实际出现的词；扩展词显式标注"本课未出现，扩展知识",
+   note:"解析 HTML：发音/连读（写音标或拟音）+ 词汇 + 常用词组（短语搭配，必写）+ 句型 + 文化梗 + 造句示例 1-2 个（六要素，v1.2 起强制，见 lesson-template.md Step 2）；例句总量全课 ~20 句、有趣可复用、按学员等级写（见 SKILL.md 第 1.5 节工作模式）"}  // 硬规则：词组/句型/连读示例必须逐字来自该句原句；速查卡只列本课实际出现的词；扩展词显式标注"本课未出现，扩展知识",
   // who 取值：S=Stewie / B=Brian / O=军官（新说话人加 badge 类，见 2.3）
 ];
 var FULL_END = 67.8;   // 音频总长（秒）
@@ -121,19 +121,27 @@ h1 34px/800，shead h2 21px/800，正文 14-15.5px，注释 13-13.5px。`button{
 - **timeupdate 驱动**：cue 模式到 `cueEnd` 时——`loopOn` 则回跳 `cueStart`，否则暂停复位；full 模式用 `bv.duration || FULL_END` 驱动盲听进度条（video duration 在部分环境读不出，兜底常量）。
 - **变速**：`audio.playbackRate = rate`（0.5/0.75/1/1.25），rate 按钮 `data-rate` + `aria-pressed` 单选。
 - **空格键**：播放/暂停当前模式；`e.target` 为 BUTTON/INPUT/VIDEO 时忽略（防止点按钮后空格误触）。
+- **上下句循环（必做，防"最后一句卡死"bug）**：精听面板「上一句/下一句」按双向循环语义——最后一句点「下一句」跳回**第 1 句**，第一句点「上一句」跳回**最后一句**。
+  ```js
+  // nextBtn：cur < 末句 → 前进；否则循环回第一句
+  if (cur < CUES.length - 1) nextCue(1); else playCue(0);
+  // prevBtn：cur > 0 → 后退；否则循环回最后一句
+  if (cur > 0) nextCue(-1); else playCue(CUES.length - 1);
+  ```
+  真实事故：派生课页时若手抄旧模板，nextBtn 末句分支写成 `playCue(CUES.length - 1)`（重播最后一句），精听到最后一句再点「下一句」就卡住不跳回。模板 `assets/lesson-template.html` 已是双向循环实现，派生时**不要改回不循环版本**。
 - 所有按钮挂真实 handler；`aria-label` 齐全；播放必须由点击触发。
 
 ## 4. 台词时间轴三重校准（±0.3s，产线必做）
 
 1. **字幕站全文**：subslikescript / springfieldspringfield 搜全集脚本，确定场景起止、说话人、逐字台词。
 2. **视频硬字幕 OCR**：下载 B 站剪辑后抽帧（1-5s 间隔），用图片识别读硬字幕英文——剪辑常跳句，硬字幕即"实际音频里有什么"的证据。
-3. **云端 ASR 逐句校准（推荐必做）**：mediakit-cli `video asr-subtitles`（eng-US）对裁剪音频做识别，拿带时间戳的逐句文字；快速对吵、连读句 ASR 能听出**真实句子数和边界**——避免"漏句/对不上"。
+3. **本地 ASR 逐句校准（推荐必做）**：对裁剪好的场景音频跑本地 ASR（如 faster-whisper base 模型，比 tiny 准；模型文件经代理手动下到 C:/temp/fw_base 可直接复用），拿带时间戳的逐句文字；快速对吵、连读句 ASR 能听出**真实句子数和边界**——避免"漏句/对不上"。
 4. **三方比对**：ASR 时间轴为主、硬字幕 OCR 校准内容、字幕站全文兜底说话人与上下文；以**实际音频**为准（剪辑删句时标注差异）。逐句 `s/e` 与音频对齐（±0.3s），页脚注明口径。
 5. **说话人归属**：多说话人时按角色分配 who；ASR 的 speaker 字段可参考，最终以剧情上下文人工确认。
 
 ## 5. 片源查找与准备
 
-1. **找片**：`site:bilibili.com 剧集名+场景/梗关键词` 搜剪辑或合集（常带硬字幕可作证据）；YouTube 备选。用 doubao-video-extract 下载（`social_video_to_minutes.py --media-mode video`）。
+1. **找片**：`site:bilibili.com 剧集名+场景/梗关键词` 搜剪辑或合集（常带硬字幕可作证据）；YouTube 备选。用 yt-dlp 下载（默认多线程；**先探测本机代理，有代理加 `--proxy`，无代理 B 站直连 / YouTube 走 B 站搬运或公共代理，通道细节见 clip-selection.md 第 3 节**）。
 2. **定位场景**：对下载视频抽帧/OCR 定位目标场景时间轴；从 B 站合集里找目标片段（如第 2 课在 52 分钟合集的 1008.0–1075.8s）。
 3. **裁字幕（源带硬字幕时）**：抽帧确认字幕条坐标——**顶部 UP 主中文旁白条和底部双语条都要查**（横版 640x360 示例：顶部 y0-45、底部 y255+，保留中间 → `crop=640:210:0:45`；竖版 360x480 示例：底部 y320-480 → `crop=360:320:0:0`）。
 4. **裁视频（无字幕盲听片）**：
@@ -155,14 +163,16 @@ poster = "data:image/jpeg;base64," + POSTER_B64;
 ```
 
 - **替换变量本体，禁止只改 src 前缀**（第 2 课真实事故：只改 src 会把新 base64 拼进上一课旧变量，学员听到上一课内容）。
-- base64 从产物文件生成：`base64 -w0 blind.mp4`，嵌入后行内单引号包裹。
+- base64 从产物文件生成（`python -c` 读文件 + `base64.b64encode`，或 `base64 -w0`），**用 Python/脚本整段写入 HTML**——不要用 PowerShell `Set-Content`/`Out-File` 落盘（会把 UTF-8 中文 CUES 写成 GBK 乱码导致 JS 语法错、整页空白；第 5 课真实事故）。变量用**双引号**包裹（与模板 `var AUDIO_B64 = "…"` 一致），base64 字母表是 `[A-Za-z0-9+/=]` 不含引号，安全。
+- **中文引号**：CUES 的 `note`/`ex`/`en`/`zh` 字段里凡引用中文词（如「嘴硬」「反正也是」）一律用**中文引号 `「」` 或 `“ ”`**，绝不用英文双引号 `"` 包裹——英文双引号会提前终止 JS 字符串导致整段 script 语法错、页面空白（第 5 课真实事故，整页空白根因）。
 
 ## 7. 生成后验证（三重 + 浏览器）
 
 1. **字节一致**：从 HTML 提取 `AUDIO_B64`/`VIDEO_B64` 解码回文件，与磁盘源文件 `cmp` 逐字节一致。
-2. **时长一致**：`ffprobe` 音频时长 = 视频时长 = `FULL_END`（误差 ±0.1s）。
-3. **页面自检**：按 html Skill 跑 `shot.py`（桌面 + 移动截图、console 错误、横向溢出、资源错误），全部为空才交付。
-4. **浏览器实测**：playwright 打开 `file://`，`audio.duration` 应为 FULL_END（video.duration 在该环境受 URL safety 限制读不出，属环境限制；视频正确性以"编码参数与上一课可播视频一致 + moov 前置 + 字节一致"兜底）。验证 `#盲听/精讲/精听` 锚点、变速钮、上下句、循环、音量联动。
+2. **时长一致**：`ffprobe` 音频时长 = 视频时长 = `FULL_END`（误差 ±0.1s）。**额外**：精听 `<audio>` 的时长必须等于「场景裁切段」的时长（与视频同窗口），绝不能等于整集/合集全长——若 `audio.duration` 明显大于裁切段（如 93s 而视频 30s），说明误嵌了完整版音频，精听句子会全错位（clip-selection.md 第 7 节）。
+3. **JS 可执行**：从 HTML 提取 `<script>` 内容存 .js，`node -c` 语法检查通过；再查 CUES 里 note/ex/en/zh 字段无英文双引号包裹中文（应用 `「」`，否则整页空白）。
+4. **页面自检**：Playwright 无头浏览器实开（桌面 + 移动视口截图、console 错误、横向溢出、资源错误），全部为空才交付。
+5. **浏览器实测**：playwright 打开 `file://`，`audio.duration` 应为 FULL_END（video.duration 在该环境受 URL safety 限制读不出，属环境限制；视频正确性以"编码参数与上一课可播视频一致 + moov 前置 + 字节一致"兜底）。验证 `#盲听/精讲/精听` 锚点、变速钮、上下句、循环、音量联动；并**点最后一句 cue 再点「下一句」确认跳回第一句**（wrap 行为，见第 3 节）。
 
 ## 8. 常见问题速查
 
@@ -170,7 +180,10 @@ poster = "data:image/jpeg;base64," + POSTER_B64;
 |---|---|
 | 视频黑屏/无法播放 | moov 在文件尾 → 重新 ffmpeg 加 `-movflags +faststart` |
 | 点句播的是上一课内容 | base64 变量本体没替换 → 替换 AUDIO_B64/VIDEO_B64 定义处 |
-| 漏句/语音文字对不上 | 没做 ASR 三方校准 → 补 mediakit asr-subtitles，按真实句子数重拆 CUES |
+| 漏句/语音文字对不上 | 没做 ASR 三方校准 → 补本地 ASR（faster-whisper base），按真实句子数重拆 CUES |
+| 精听句子跟音频错位（点到某句听到别的话） | 误嵌整集/合集完整音频，而 CUES 按裁切段 0-30s 校准 → 重裁与视频同窗口的音频替换 |
+| 整页空白 | ① PowerShell Set-Content 把中文写 GBK 乱码 → 改 Python 写；② CUES 里英文双引号包中文 → 换 `「」`（见第 6 节） |
 | 盲听画面有字幕 | 只裁了底部没裁顶部旁白条 → 上下边缘都抽帧确认再 crop |
 | video.duration 为 NaN | 环境 headless 限制，非文件问题；按编码参数兜底判断 |
 | 三区锚点点了没反应 | steps href 与 section id 不一致 → 核对 `#blind/#explain/#intensive` |
+| 最后一句点「下一句」不跳回第一句（卡在末句） | nextBtn 末句分支误写成重播末句 → 改为 `playCue(0)`（双向循环，见第 3 节「上下句循环」契约） |

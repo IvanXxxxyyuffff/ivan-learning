@@ -66,6 +66,8 @@ section{padding:26px 20px;border-bottom:1px solid var(--line)}
 .cue .notebtn[aria-expanded="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
 .cue .note{display:none;padding:10px 14px 12px;border-top:1px dashed var(--line);font-size:13.5px;color:#37414f;background:#fbfcfe}
 .cue .note b{color:var(--blue)}
+.cue .ex{margin-top:8px;padding:8px 10px;background:var(--card);border:1px solid var(--line);border-radius:8px}
+.cue .ex .lbl{font-size:12px;font-weight:800;color:var(--sub)}
 .cue.playing .en{color:var(--blue)}
 
 /* 发音对比 */
@@ -125,7 +127,7 @@ Ivan Learning 课程页模板（v1.0）— 派生步骤（先读 references/html
 3. 替换 __AUDIO_B64__ / __VIDEO_B64__ / __POSTER_B64__（裁好片再转 base64，poster 填进 <video poster="">）
 4. FULL_END 改为音频真实总长（秒）
 5. 说话人 >2 时：CSS 加 .badge.X 颜色，渲染处加 who→名字映射
-6. 验证：html-build.md 第 7 节三重验证 + shot.py 自检后交付
+6. 验证：html-build.md 第 7 节三重验证 + Playwright 浏览器实开自检后交付
 ============================================================
 -->
 
@@ -228,10 +230,14 @@ Ivan Learning 课程页模板（v1.0）— 派生步骤（先读 references/html
   var AUDIO_B64 = "__AUDIO_B64__"; // ← 替换为音频 base64，见 references/html-build.md 第 6 节
   var VIDEO_B64 = "__VIDEO_B64__"; // ← 替换为盲听视频 base64，见 references/html-build.md 第 6 节
   var CUES = [
-    {who:"B",en:"All right, last resort.",zh:"好吧，最后一招了。",s:0.4,e:1.6,note:"连读：<b>last resort</b>→<b>/læst rɪˈzɔrt/</b>（st 与 r 相连）。习语 <b>last resort</b>＝最后一招。<br>示例句：把本课全部句子按此结构填入，条数=实际台词句数；时间轴 s/e 来自台词校准。"},
-    {who:"S",en:"We get injured and go home with purple hearts.",zh:"我们受点伤，然后带着紫心勋章回家。",s:1.6,e:3.8,note:"连读：<b>get injured</b> 的 t 失爆；<b>and go</b>→<b>/ən ɡoʊ/</b>（and 弱读）。文化梗 <b>purple heart</b>＝紫心勋章。<br>说明：who 取值 S=Stewie / B=Brian / O=其他，新说话人需在 CSS 加 .badge.X 并在渲染处扩展映射。"}
-];
-  var FULL_END = 67.8;
+    {who:"B",en:"All right, last resort.",zh:"好吧，最后一招了。",s:0.4,e:1.6,
+     note:"连读：<b>last resort</b>→<b>/læst rɪˈzɔrt/</b>（st 与 r 相连）。习语 <b>last resort</b>＝最后一招。常用词组 <b>as a last resort</b>。<br>例句：<i>We tried everything else; calling a pro was a last resort.</i>",
+     ex:"<b>last resort</b> 还能说 <i>final option</i> / <i>the last thing you'd do</i>（同义扩展）。"},
+    {who:"S",en:"We get injured and go home with purple hearts.",zh:"我们受点伤，然后带着紫心勋章回家。",s:1.6,e:3.8,
+     note:"连读：<b>get injured</b> 的 t 失爆；<b>and go</b>→<b>/ən ɡoʊ/</b>（and 弱读）。文化梗 <b>purple heart</b>＝紫心勋章。短语 <b>go home with...</b>。<br>例句：<i>He went home with a medal after the parade.</i>",
+     ex:"<b>purple heart</b> 是美国军队伤愈荣誉勋章，常用来指「负伤换来的认可」。"}
+  ];
+  var FULL_END = 67.8; // 音频总长（秒）= 精听音频 = 盲听视频 = 场景裁切窗口；必须与裁切段一致（勿用整集全长，见 clip-selection.md 第 7 节）
 
   var audio = document.getElementById("a");
   audio.src = "data:audio/mpeg;base64," + AUDIO_B64;
@@ -284,7 +290,7 @@ Ivan Learning 课程页模板（v1.0）— 派生步骤（先读 references/html
     }catch(err){}
   }
 
-  function playCue(i, auto){
+  function playCue(i){
     mode = "cue";
     bv.pause();
     cur = i;
@@ -297,12 +303,12 @@ Ivan Learning 课程页模板（v1.0）— 派生步骤（先读 references/html
 
   function toggleCue(i){
     if (mode === "cue" && cur === i && playing){ audio.pause(); setPlaying(false); return; }
-    playCue(i, true);
+    playCue(i);
   }
 
   function nextCue(delta){
     var n = cur < 0 ? 0 : clamp(cur + delta, 0, CUES.length - 1);
-    playCue(n, true);
+    playCue(n);
   }
 
   audio.addEventListener("timeupdate", function(){
@@ -334,23 +340,27 @@ Ivan Learning 课程页模板（v1.0）— 派生步骤（先读 references/html
   });
 
   /* 精讲渲染 */
+  // who 取值与名字映射：按本课说话人改这里 + 同步 CSS .badge.X 颜色。
+  // 默认 S=Stewie / B=Brian / O=军官（第 2 课）；新课替换成本课角色，多余说话人在 CSS 加 .badge.<X>。
+  var WHO = { S: "Stewie", B: "Brian", O: "军官" };
   var box = document.getElementById("cues");
   CUES.forEach(function(c, i){
     var d = document.createElement("div");
     d.className = "cue"; d.id = "cue-" + i;
+    var whoLabel = WHO[c.who] || c.who;
     d.innerHTML =
       '<div class="top">' +
         '<button class="play" aria-label="播放第 ' + (i+1) + ' 句">' +
           '<span class="idx">' + (i+1) + '</span>' +
-          '<span class="badge ' + c.who + '">' + (c.who === "S" ? "Stewie" : c.who === "O" ? "军官" : "Brian") + '</span>' +
+          '<span class="badge ' + c.who + '">' + whoLabel + '</span>' +
           '<span><span class="en"></span><span class="zh"></span></span>' +
         '</button>' +
         '<button class="notebtn" aria-expanded="false">解析</button>' +
       '</div>' +
-      '<div class="note"></div>';
+      '<div class="note"><div class="notebody"></div>' + (c.ex ? '<div class="ex"><span class="lbl">更多例句</span>' + c.ex + '</div>' : '') + '</div>';
     d.querySelector(".en").textContent = c.en;
     d.querySelector(".zh").textContent = c.zh;
-    d.querySelector(".note").innerHTML = c.note;
+    d.querySelector(".notebody").innerHTML = c.note;
     d.querySelector(".play").addEventListener("click", function(){ toggleCue(i); });
     var nb = d.querySelector(".notebtn");
     nb.addEventListener("click", function(){
@@ -378,12 +388,12 @@ Ivan Learning 课程页模板（v1.0）— 派生步骤（先读 references/html
     pen.textContent = CUES[cur].en;
     pzh.textContent = CUES[cur].zh;
   }
-  document.getElementById("prevBtn").addEventListener("click", function(){ if (cur > 0) nextCue(-1); else playCue(CUES.length - 1, true); /* 第一句→循环回最后一句 */ });
-  document.getElementById("nextBtn").addEventListener("click", function(){ if (cur < CUES.length - 1) nextCue(1); else playCue(0, true); /* 最后一句→循环回第一句 */ });
+  document.getElementById("prevBtn").addEventListener("click", function(){ if (cur > 0) nextCue(-1); else playCue(CUES.length - 1); /* 第一句→循环回最后一句 */ });
+  document.getElementById("nextBtn").addEventListener("click", function(){ if (cur < CUES.length - 1) nextCue(1); else playCue(0); /* 最后一句→循环回第一句 */ });
   document.getElementById("playBtn").addEventListener("click", function(){
     if (playing && mode === "cue"){ audio.pause(); setPlaying(false); return; }
     if (cur < 0) cur = 0;
-    playCue(cur, true);
+    playCue(cur);
   });
   var loopBtn = document.getElementById("loopBtn");
   loopBtn.addEventListener("click", function(){
@@ -410,7 +420,7 @@ Ivan Learning 课程页模板（v1.0）— 派生步骤（先读 references/html
       e.preventDefault();
       if (playing){ audio.pause(); setPlaying(false); }
       else if (mode === "full"){ playFull(); }
-      else { if (cur < 0) cur = 0; playCue(cur, true); }
+      else { if (cur < 0) cur = 0; playCue(cur); }
     }
   });
 })();
